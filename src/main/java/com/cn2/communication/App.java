@@ -1,21 +1,21 @@
 package com.cn2.communication;
 
+
 import java.io.*;
 import java.net.*;
 
 import javax.swing.JFrame;
 import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
 import javax.swing.JButton;
 import javax.swing.JTextArea;
 import javax.swing.JScrollPane;
 
-import java.awt.event.ActionListener;
-import java.awt.event.ActionEvent;
 import java.awt.*;
 import java.awt.event.*;
-import java.awt.Color;
 import java.lang.Thread;
 
+@SuppressWarnings("unused")
 public class App extends Frame implements WindowListener, ActionListener {
 
 	/*
@@ -30,19 +30,22 @@ public class App extends Frame implements WindowListener, ActionListener {
 	final static String newline="\n";		
 	static JButton callButton;				
 	
-	// TODO: Please define and initialize your variables here...
+	//  initialize your variables here...
+	String receiverAddress = "192.168.1.28";      // Place the IP Address of the other peer here
+	final Integer MESSAGE_PORT = 12345;
+	static Peer peer;
+	
 	
 	/**
 	 * Construct the app's frame and initialize important parameters
 	 */
-	public App(String title) {
-		
+	public App() {                                                          
+		           
 		/*
 		 * 1. Defining the components of the GUI
 		 */
-		
 		// Setting up the characteristics of the frame
-		super(title);									
+		super("CN2 - AUTH");	
 		gray = new Color(254, 254, 254);		
 		setBackground(gray);
 		setLayout(new FlowLayout());			
@@ -75,30 +78,25 @@ public class App extends Frame implements WindowListener, ActionListener {
 		 * 3. Linking the buttons to the ActionListener
 		 */
 		sendButton.addActionListener(this);			
-		callButton.addActionListener(this);	
+		callButton.addActionListener(this);
 
-		
+
+		//Peer will continuously listen for messages and start a client to send messages 
+		peer = new Peer();                                                                     
+		peer.start(this);                                                               
 	}
-	
+
 	/**
 	 * The main method of the application. It continuously listens for
 	 * new messages.
 	 */
 	public static void main(String[] args){
-	
 		/*
 		 * 1. Create the app's window
 		 */
-		App app = new App("CN2 - AUTH");  // TODO: You can add the title that will displayed on the Window of the App here																		  
+		App app = new App(); 																	  
 		app.setSize(500,250);				  
 		app.setVisible(true);				  
-
-		/*
-		 * 2. 
-		 */
-		do{		
-			// TODO: Your code goes here...
-		}while(true);
 	}
 	
 	/**
@@ -108,69 +106,80 @@ public class App extends Frame implements WindowListener, ActionListener {
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		
-	
-
-		/*
-		 * Check which button was clicked.
-		 */
 		if (e.getSource() == sendButton){
-			
-			// The "Send" button was clicked
-			
-			// TODO: Your code goes here...
-		
+			if (inputTextField.getText().trim().isEmpty()) {
+				return;
+			}
+			peer.startClient(receiverAddress,MESSAGE_PORT);
+
+			try {
+				String message=peer.getAddress().getHostAddress()+": "+ inputTextField.getText();
+				peer.getClient().sendMessageFromInputField(message);
+				textArea.setText(textArea.getText()+"\n"+message);
+
+			} catch (Error er) {
+				System.out.println(er);
+			}
+			inputTextField.setText("");
+					
 			
 		}else if(e.getSource() == callButton){
-			
-			// The "Call" button was clicked
-			
-			// TODO: Your code goes here...
-			
+						
+			if(callButton.getText()=="Call"){
+				peer.voiceCall();
+				callButton.setText("Stop call");
+			}
+			else if(callButton.getText()=="Stop call"){
+				peer.stopVoiceCall();
+				callButton.setText("Call");
+			}
 			
 		}
 			
 
 	}
-
-	/**
-	 * These methods have to do with the GUI. You can use them if you wish to define
-	 * what the program should do in specific scenarios (e.g., when closing the 
-	 * window).
-	 */
-	@Override
-	public void windowActivated(WindowEvent e) {
-		// TODO Auto-generated method stub	
-	}
+    public void handleMessage(String message) {
+        SwingUtilities.invokeLater(() -> textArea.append(newline + message));
+    }
 
 	@Override
-	public void windowClosed(WindowEvent e) {
-		// TODO Auto-generated method stub	
+	public void windowOpened(WindowEvent e) {
+		// TODO Auto-generated method stub
+	
 	}
 
 	@Override
 	public void windowClosing(WindowEvent e) {
 		// TODO Auto-generated method stub
 		dispose();
-        	System.exit(0);
+		System.exit(0);
 	}
 
 	@Override
-	public void windowDeactivated(WindowEvent e) {
-		// TODO Auto-generated method stub	
-	}
-
-	@Override
-	public void windowDeiconified(WindowEvent e) {
-		// TODO Auto-generated method stub	
+	public void windowClosed(WindowEvent e) {
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
 	public void windowIconified(WindowEvent e) {
-		// TODO Auto-generated method stub	
+		// TODO Auto-generated method stub
 	}
 
 	@Override
-	public void windowOpened(WindowEvent e) {
-		// TODO Auto-generated method stub	
+	public void windowDeiconified(WindowEvent e) {
+		// TODO Auto-generated method stub
 	}
+
+	@Override
+	public void windowActivated(WindowEvent e) {
+		// TODO Auto-generated method stub
+	}
+
+	@Override
+	public void windowDeactivated(WindowEvent e) {
+		// TODO Auto-generated method stub
+	}
+
+
 }
